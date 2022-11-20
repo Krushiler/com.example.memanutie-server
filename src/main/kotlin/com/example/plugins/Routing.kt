@@ -1,36 +1,21 @@
 package com.example.plugins
 
 import com.example.database.dao.IMemeDao
-import com.example.dto.CreatePostRequest
-import com.example.dto.PostDto
-import com.example.dto.PostsResponse
+import com.example.plugins.posts.postsRouting
 import io.ktor.server.routing.*
-import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.request.*
+import io.ktor.server.http.content.*
+import java.io.File
 
 fun Application.configureRouting(
-    memeDao: IMemeDao
+    memeDao: IMemeDao,
+    serverUrl: String
 ) {
-
     routing {
-        get("/posts") {
-
-            val posts = memeDao.getAllPosts().map {
-                PostDto(it.content)
-            }
-
-            call.respond(
-                PostsResponse(posts, posts.size)
-            )
+        static {
+            staticRootFolder = File(environment?.rootPath)
+            files("files")
         }
-        post("/post/create") {
-            val postData = call.receive<CreatePostRequest>()
-            memeDao.createPost(postData.content)
-            call.respond("ВЫ НАПИСАЛИ ${postData.content}")
-        }
-    }
-    routing {
+        postsRouting(memeDao, serverUrl)
     }
 }
