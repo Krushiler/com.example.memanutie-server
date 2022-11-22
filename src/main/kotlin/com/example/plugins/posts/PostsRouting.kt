@@ -23,7 +23,7 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
         post("/create") {
             val multipartBody = call.receiveMultipart()
 
-            var imageUrl: String? = null
+            val files = mutableListOf<String>()
             var content: String? = null
 
             multipartBody.forEachPart { part ->
@@ -37,8 +37,8 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
                     }
 
                     is PartData.FileItem -> {
-                        imageUrl = generateFilename("upload", part.originalFileName!!.extension())
-                        val file = File("files/$imageUrl")
+                        files.add(generateFilename("upload", part.originalFileName!!.extension()))
+                        val file = File("files/${files.last()}")
                         part.streamProvider().use { inputStream ->
                             file.outputStream().buffered().use { outputStream ->
                                 inputStream.copyTo(outputStream)
@@ -52,7 +52,7 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
 
             memeDao.createPost(
                 content = content,
-                imageUrl = imageUrl
+                attachments = files
             )
             call.respondText { "success" }
         }
