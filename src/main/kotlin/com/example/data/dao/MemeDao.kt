@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 interface IMemeDao : Closeable {
     fun init()
-    fun createPost(content: String? = null, attachments: List<String>? = null)
+    fun createPost(content: String? = null, attachments: List<String>? = null): Int
     fun getPost(id: Int): Post?
     fun getAllPosts(): List<Post>
     fun deletePost(id: Int)
@@ -50,7 +50,8 @@ class RealMemeDao(private val db: Database) : IMemeDao {
                 fileRow[path] = attachmentPath
             }
         }
-        Unit
+
+        return@transaction newPostId
     }
 
     override fun getPost(id: Int): Post? = transaction(db) {

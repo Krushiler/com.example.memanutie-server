@@ -53,11 +53,17 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
                     }
                 }
 
-                memeDao.createPost(
+                val createdPostId = memeDao.createPost(
                     content = content,
                     attachments = files
                 )
-                call.respondText { "success" }
+
+                val createdPost = memeDao.getPost(createdPostId)
+                if (createdPost != null) {
+                    call.respond { PostDto.fromPost(createdPost, serverUrl = serverUrl) }
+                } else {
+                    call.respondText { "failure" }
+                }
             } catch (e: IOException) {
                 call.respondText { e.localizedMessage }
             }
