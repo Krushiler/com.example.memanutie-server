@@ -13,8 +13,17 @@ import io.ktor.utils.io.errors.*
 import java.io.File
 
 fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
-    route("posts") {
+    route("post") {
         get {
+            val postId = call.request.queryParameters["id"]?.toInt()
+            if (postId != null) {
+                val post = memeDao.getPost(postId)
+                if (post != null) call.respond(PostDto.fromPost(post, serverUrl))
+                else call.respondText { "no such post" }
+            }
+            call.respondText { "failure" }
+        }
+        get("/list") {
             val posts = memeDao.getAllPosts().map {
                 PostDto.fromPost(it, serverUrl = serverUrl)
             }
@@ -60,7 +69,7 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
 
                 val createdPost = memeDao.getPost(createdPostId)
                 if (createdPost != null) {
-                    call.respond { PostDto.fromPost(createdPost, serverUrl = serverUrl) }
+                    call.respond(PostDto.fromPost(createdPost, serverUrl = serverUrl))
                 } else {
                     call.respondText { "failure" }
                 }
@@ -82,7 +91,16 @@ fun Route.postsRouting(memeDao: IMemeDao, serverUrl: String) {
             } else {
                 call.respondText { "failure" }
             }
-
+        }
+        post("/comment") {
+            val commentData = call.receive<CommentPostRequest>()
+            memeDao.addComment(commentData.postId, commentData.content)
+            val post = memeDao.getPost(commentData.postId)
+            if (post != null) {
+                call.respond(PostDto.fromPost(post, serverUrl = serverUrl))
+            } else {
+                call.respondText { "failure" }
+            }
         }
     }
 }
