@@ -1,7 +1,8 @@
 package com.example.plugins
 
-import com.example.database.dao.IMemeDao
+import com.example.data.dao.IMemeDao
 import com.example.plugins.posts.postsRouting
+import com.example.staticFilesFolder
 import io.ktor.server.routing.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
@@ -14,8 +15,10 @@ fun Application.configureRouting(
     routing {
         static {
             staticRootFolder = File(environment?.rootPath)
-            files("files")
+            files(staticFilesFolder)
         }
-        postsRouting(memeDao, serverUrl)
+        route("api") {
+            postsRouting(memeDao, serverUrl)
+        }
     }
 }

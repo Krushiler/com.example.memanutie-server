@@ -1,4 +1,4 @@
-package com.example.database.models
+package com.example.models
 
 import org.jetbrains.exposed.sql.Table
 
@@ -9,7 +9,9 @@ data class Post(
 )
 
 object Posts : Table() {
-    val id = integer("id").autoIncrement()
+    val id = integer("id")
+        .autoIncrement()
+
     val content = largeText("content").nullable()
 
     override val primaryKey = PrimaryKey(id)

@@ -1,7 +1,7 @@
 package com.example.plugins.posts
 
-import  com.example.database.models.Attachments
-import com.example.database.models.Post
+import  com.example.models.Attachments
+import com.example.models.Post
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,7 +14,7 @@ data class PostDto(
             content = post.content,
             attachments = post.attachments.map {
                 AttachmentDto(
-                    it.id, it.postId, it.path
+                    it.id, it.postId, serverUrl + it.path
                 )
             }
         )

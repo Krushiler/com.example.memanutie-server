@@ -19,7 +19,7 @@ fun generateFilename(prefix: String = "", extension: String = ""): String {
     return "$prefix-$currentTime-$postfix.$extension"
 }
 
-fun String.extension(): String = substringAfterLast('.', "")
+fun String?.extension(): String = this?.substringAfterLast('.', "") ?: ""
 
 fun Application.getServerUrl(): String {
     for (connector in (environment as ApplicationEngineEnvironment).connectors) {

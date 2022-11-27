@@ -1,9 +1,9 @@
-package com.example.database.dao
+package com.example.data.dao
 
-import com.example.database.models.Attachment
-import com.example.database.models.Attachments
-import com.example.database.models.Post
-import com.example.database.models.Posts
+import com.example.models.Attachment
+import com.example.models.Attachments
+import com.example.models.Post
+import com.example.models.Posts
 import io.ktor.utils.io.core.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -19,46 +19,56 @@ interface IMemeDao : Closeable {
 
 class RealMemeDao(private val db: Database) : IMemeDao {
 
+    private fun ResultRow.toPost() =
+        Post(
+            id = this[Posts.id],
+            content = this[Posts.content],
+            attachments = getPostAttachments(this[Posts.id])
+        )
+
+    private fun ResultRow.toAttachment() =
+        Attachment(
+            id = this[Attachments.id],
+            postId = this[Attachments.postId],
+            path = this[Attachments.path] ?: ""
+        )
+
+
     override fun init() = transaction(db) {
         SchemaUtils.create(Posts)
         SchemaUtils.create(Attachments)
     }
 
     override fun createPost(content: String?, attachments: List<String>?) = transaction(db) {
-        val postId = Posts.insert { postRow ->
+        val newPostId = Posts.insert { postRow ->
             postRow[Posts.content] = content
         } get Posts.id
 
         attachments?.forEach { attachmentPath ->
             Attachments.insert { fileRow ->
-                fileRow[Attachments.postId] = postId
-                fileRow[Attachments.path] = attachmentPath
+                fileRow[postId] = newPostId
+                fileRow[path] = attachmentPath
             }
         }
         Unit
     }
 
     override fun getPost(id: Int): Post? = transaction(db) {
-        Posts.select { Posts.id eq id }.map { row->
-            Post(
-                id = row[Posts.id],
-                content = row[Posts.content],
-                attachments = getPostAttachments(row[Posts.id])
-            )
+        Posts.select { Posts.id eq id }.map { row ->
+            row.toPost()
         }.singleOrNull()
     }
 
     override fun getAllPosts(): List<Post> = transaction(db) {
         Posts.selectAll().map { row ->
-            Post(
-                id = row[Posts.id],
-                content = row[Posts.content],
-                attachments = getPostAttachments(row[Posts.id])
-            )
+            row.toPost()
         }
     }
 
     override fun deletePost(id: Int) = transaction {
+        Attachments.deleteWhere {
+            this.postId eq id
+        }
         Posts.deleteWhere {
             this.id eq id
         }
@@ -67,11 +77,7 @@ class RealMemeDao(private val db: Database) : IMemeDao {
 
     private fun getPostAttachments(postId: Int): List<Attachment> = transaction(db) {
         Attachments.select { Attachments.postId eq postId }.map { row ->
-            Attachment(
-                id = row[Attachments.id],
-                postId = row[Attachments.postId],
-                path = row[Attachments.path] ?: ""
-            )
+            row.toAttachment()
         }
     }
 
