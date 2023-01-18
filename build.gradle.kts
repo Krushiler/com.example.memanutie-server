@@ -46,3 +46,10 @@ dependencies {
     implementation("io.ktor:ktor-serialization:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
 }
+
+ktor {
+    docker {
+        localImageName.set("memanutie-docker-image")
+        imageTag.set("0.0.1")
+    }
+}
